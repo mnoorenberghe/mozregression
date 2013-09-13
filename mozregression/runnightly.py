@@ -61,7 +61,9 @@ class Nightly(object):
             self.lastdest = None
 
     def cleanup(self):
-        self.remove_tempdir()
+# Don't cleanup the extracted downloads so that we can run the executable afterwads.
+# WARNING: This will take up disk space in your temp directory.
+#        self.remove_tempdir()
         if not self.persist:
             self.remove_lastdest()
 
@@ -248,9 +250,10 @@ class NightlyRunner(object):
     def start(self, date=datetime.date.today()):
         if not self.install(date):
             return False
-        print "Starting nightly"
-        if not self.app.start(self.profile, self.addons, self.cmdargs):
-            return False
+        print "Binary extracted"
+        print self.app.binary
+        sys.stderr.write(self.app.binary + "\n")
+        sys.exit(0);
         return True
 
     def stop(self):
@@ -305,11 +308,12 @@ def cli(args=sys.argv[1:]):
     runner = NightlyRunner(appname=options.app, addons=addons,
                            profile=options.profile, repo_name=options.repo_name, bits=options.bits,
                            persist=options.persist)
-    runner.start(get_date(options.date))
-    try:
-        runner.wait()
-    except KeyboardInterrupt:
-        runner.stop()
+    if not runner.start(get_date(options.date)):
+        sys.exit(-1)
+    #try:
+    #    runner.wait()
+    #except KeyboardInterrupt:
+    #    runner.stop()
 
 
 if __name__ == "__main__":
